@@ -86,13 +86,36 @@ export interface LocationAutocompleteTheme {
   };
 }
 
+export type LocationProvider =
+  | 'openstreetmap'
+  | 'mapbox'
+  | 'google'
+  | 'geoapify'
+  | 'locationiq'
+  | 'here'
+  | 'tomtom'
+  | 'opencage';
+
+export interface ProviderConfig {
+  apiKey?: string;
+  baseUrl?: string;
+}
+
+export interface QueryOptions {
+  [key: string]: string | number | boolean;
+}
+
 export interface LocationAutocompleteProps {
   placeholder?: string;
   onLocationSelect?: (location: LocationSuggestion) => void;
   onQueryChange?: (query: string) => void;
-  fetchSuggestions: (query: string) => Promise<LocationSuggestion[]>;
+  fetchSuggestions?: (query: string) => Promise<LocationSuggestion[]>;
+  provider?: LocationProvider;
+  providerConfig?: ProviderConfig;
+  queryOptions?: QueryOptions;
   debounceMs?: number;
   containerStyle?: ViewStyle;
+  inputContainerStyle?: ViewStyle;
   inputStyle?: ViewStyle;
   suggestionStyle?: ViewStyle;
   textStyle?: TextStyle;

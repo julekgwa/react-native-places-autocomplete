@@ -1,12 +1,22 @@
 import { useState } from 'react';
-import { View, StyleSheet, Text, Alert, SafeAreaView } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  Text,
+  Alert,
+  ScrollView,
+  TouchableOpacity,
+  FlatList,
+} from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import {
   LocationAutocomplete,
   type LocationSuggestion,
+  type LocationProvider,
 } from '@julekgwa/react-native-places-autocomplete';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-// mock
+// Mock function for demonstration (when not using built-in providers)
 const mockFetchSuggestions = async (
   query: string
 ): Promise<LocationSuggestion[]> => {
@@ -31,33 +41,8 @@ const mockFetchSuggestions = async (
       type: 'city',
       importance: 0.8,
     },
-    {
-      place_id: '3',
-      display_name: 'Paris, France',
-      lat: '48.8566',
-      lon: '2.3522',
-      type: 'city',
-      importance: 0.8,
-    },
-    {
-      place_id: '4',
-      display_name: 'Tokyo, Japan',
-      lat: '35.6762',
-      lon: '139.6503',
-      type: 'city',
-      importance: 0.7,
-    },
-    {
-      place_id: '5',
-      display_name: 'Sydney, Australia',
-      lat: '-33.8688',
-      lon: '151.2093',
-      type: 'city',
-      importance: 0.7,
-    },
   ];
 
-  // Filter results based on query
   return mockLocations.filter((location) =>
     location.display_name.toLowerCase().includes(query.toLowerCase())
   );
@@ -66,98 +51,202 @@ const mockFetchSuggestions = async (
 export default function App() {
   const [selectedLocation, setSelectedLocation] =
     useState<LocationSuggestion | null>(null);
-  const [recentSearches, setRecentSearches] = useState<string[]>([
-    'Paris',
-    'London',
-  ]);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [currentProvider, setCurrentProvider] = useState<
+    LocationProvider | 'custom'
+  >('openstreetmap');
 
   const handleLocationSelect = (location: LocationSuggestion) => {
     setSelectedLocation(location);
     Alert.alert(
       'Location Selected',
-      `You selected: ${location.display_name}\nCoordinates: ${location.lat}, ${location.lon}`
+      `${location.display_name}\nLat: ${location.lat}, Lon: ${location.lon}`
     );
   };
 
-  const handleQueryChange = (query: string) => {
-    console.log('Query changed:', query);
-  };
+  const providers: Array<{ key: LocationProvider | 'custom'; label: string }> =
+    [
+      { key: 'openstreetmap', label: 'OpenStreetMap (No API)' },
+      { key: 'opencage', label: 'OpenCage (Requires API Key)' },
+      { key: 'mapbox', label: 'Mapbox (Requires API Key)' },
+      { key: 'google', label: 'Google Places (Requires API Key)' },
+      { key: 'geoapify', label: 'Geoapify (Requires API Key)' },
+      { key: 'locationiq', label: 'LocationIQ (Requires API Key)' },
+      { key: 'here', label: 'HERE (Requires API Key)' },
+      { key: 'tomtom', label: 'TomTom (Requires API Key)' },
+      { key: 'custom', label: 'Custom Function' },
+    ];
 
-  const handleRecentSearchesChange = (searches: string[]) => {
-    setRecentSearches(searches);
+  const renderProviderExample = () => {
+    const commonProps = {
+      placeholder: `Search using ${currentProvider}...`,
+      onLocationSelect: handleLocationSelect,
+      showRecentSearches: true,
+      recentSearches,
+      onRecentSearchesChange: setRecentSearches,
+      containerStyle: styles.autocompleteContainer,
+    };
+
+    if (currentProvider === 'custom') {
+      return (
+        <LocationAutocomplete
+          {...commonProps}
+          fetchSuggestions={mockFetchSuggestions}
+        />
+      );
+    }
+
+    if (currentProvider === 'openstreetmap') {
+      return (
+        <LocationAutocomplete
+          {...commonProps}
+          provider="openstreetmap"
+          queryOptions={{
+            countrycodes: 'us,ca,gb',
+            limit: 8,
+          }}
+        />
+      );
+    }
+
+    // For providers that require API keys, show a placeholder message
+    return (
+      <View style={styles.apiKeyRequired}>
+        <Text style={styles.apiKeyText}>
+          {currentProvider.toUpperCase()} requires an API key.
+        </Text>
+        <Text style={styles.apiKeySubtext}>
+          Add your API key to providerConfig prop to use this provider.
+        </Text>
+        <View style={styles.codeExample}>
+          <Text style={styles.codeText}>
+            {`<LocationAutocomplete\n  provider="${currentProvider}"\n  providerConfig={{\n    apiKey: "YOUR_API_KEY"\n  }}\n  queryOptions={{\n    // Provider-specific options\n  }}\n/>`}
+          </Text>
+        </View>
+      </View>
+    );
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="auto" />
+      <View style={styles.header}>
+        <Text style={styles.title}>React Native Places Autocomplete</Text>
+        <Text style={styles.subtitle}>Built-in Providers Demo</Text>
 
-      <View style={styles.content}>
-        <Text style={styles.title}>Location Autocomplete Example</Text>
-        <Text style={styles.subtitle}>
-          Start typing to search for locations
-        </Text>
+        {/* Provider Selection - Fixed at top */}
+        <View style={styles.providersContainer}>
+          <Text style={styles.sectionTitle}>Select Provider:</Text>
+          <FlatList
+            data={providers}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(item) => item.key}
+            contentContainerStyle={styles.providerList}
+            renderItem={({ item: provider }) => (
+              <TouchableOpacity
+                style={[
+                  styles.providerButton,
+                  currentProvider === provider.key &&
+                    styles.providerButtonActive,
+                ]}
+                onPress={() => setCurrentProvider(provider.key)}
+              >
+                <Text
+                  style={[
+                    styles.providerButtonText,
+                    currentProvider === provider.key &&
+                      styles.providerButtonTextActive,
+                  ]}
+                >
+                  {provider.label}
+                </Text>
+              </TouchableOpacity>
+            )}
+          />
+        </View>
+      </View>
 
-        <LocationAutocomplete
-          placeholder="Search for a location..."
-          fetchSuggestions={mockFetchSuggestions}
-          onLocationSelect={handleLocationSelect}
-          onQueryChange={handleQueryChange}
-          showRecentSearches={true}
-          recentSearches={recentSearches}
-          onRecentSearchesChange={handleRecentSearchesChange}
-          maxRecentSearches={5}
-          debounceMs={300}
-          containerStyle={styles.autocomplete}
-          theme={{
-            colors: {
-              primary: '#007AFF',
-              surface: '#FFFFFF',
-              background: '#F2F2F7',
-              onSurface: '#000000',
-              onSurfaceVariant: '#8E8E93',
-              outline: '#E5E5EA',
-            },
-            spacing: {
-              lg: 16,
-              md: 12,
-              sm: 8,
-            },
-            borderRadius: {
-              lg: 12,
-            },
-            icons: {
-              search: {
-                size: 22,
-                color: '#007AFF',
-              },
-              mapPin: {
-                size: 20,
-                color: '#FF3B30',
-              },
-              clock: {
-                size: 18,
-                color: '#FF9500',
-              },
-              clear: {
-                size: 16,
-                color: '#8E8E93',
-              },
-            },
-          }}
-        />
+      {/* Scrollable Content */}
+      <ScrollView
+        style={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* Autocomplete Example */}
+        <View style={styles.exampleContainer}>
+          <Text style={styles.sectionTitle}>Search Example:</Text>
+          {renderProviderExample()}
+        </View>
 
+        {/* Selected Location Display */}
         {selectedLocation && (
-          <View style={styles.selectedLocation}>
-            <Text style={styles.selectedTitle}>Selected Location:</Text>
-            <Text style={styles.selectedText}>
+          <View style={styles.selectedContainer}>
+            <Text style={styles.sectionTitle}>Selected Location:</Text>
+            <Text style={styles.locationText}>
               {selectedLocation.display_name}
             </Text>
-            <Text style={styles.coordinates}>
-              Lat: {selectedLocation.lat}, Lon: {selectedLocation.lon}
+            <Text style={styles.coordinatesText}>
+              Coordinates: {selectedLocation.lat}, {selectedLocation.lon}
             </Text>
           </View>
         )}
-      </View>
+
+        {/* Usage Examples */}
+        <View style={styles.usageContainer}>
+          <Text style={styles.sectionTitle}>Usage Examples:</Text>
+
+          <View style={styles.exampleBlock}>
+            <Text style={styles.exampleTitle}>OpenStreetMap (Free)</Text>
+            <View style={styles.codeBlock}>
+              <Text style={styles.code}>
+                {`<LocationAutocomplete
+  provider="openstreetmap"
+  queryOptions={{
+    countrycodes: "us,ca,gb",
+    limit: 8
+  }}
+  onLocationSelect={handleSelect}
+/>`}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.exampleBlock}>
+            <Text style={styles.exampleTitle}>Mapbox</Text>
+            <View style={styles.codeBlock}>
+              <Text style={styles.code}>
+                {`<LocationAutocomplete
+  provider="mapbox"
+  providerConfig={{
+    apiKey: 'YOUR_MAPBOX_TOKEN',
+  }}
+  queryOptions={{
+    country: 'us',
+    types: 'place,address',
+  }}
+  onLocationSelect={handleSelect}
+/>;`}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.exampleBlock}>
+            <Text style={styles.exampleTitle}>Custom Function</Text>
+            <View style={styles.codeBlock}>
+              <Text style={styles.code}>
+                {`<LocationAutocomplete
+  fetchSuggestions={customFetchFunction}
+  onLocationSelect={handleSelect}
+/>`}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Add bottom padding for better UX */}
+        <View style={styles.bottomPadding} />
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -167,9 +256,16 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F2F2F7',
   },
-  content: {
+  header: {
+    paddingTop: 60,
+    paddingHorizontal: 16,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E1E1E6',
+  },
+  scrollContent: {
     flex: 1,
-    padding: 20,
+    padding: 16,
   },
   title: {
     fontSize: 24,
@@ -181,13 +277,47 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     textAlign: 'center',
-    marginBottom: 30,
+    marginBottom: 16,
     color: '#666',
   },
-  autocomplete: {
-    marginBottom: 20,
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 12,
+    color: '#000',
   },
-  selectedLocation: {
+  providersContainer: {
+    marginBottom: 0, // Reduced since it's in header now
+  },
+  providerList: {
+    paddingVertical: 10,
+  },
+  providerButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 20,
+    backgroundColor: '#E1E1E6',
+    marginRight: 10,
+    marginLeft: 5,
+  },
+  providerButtonActive: {
+    backgroundColor: '#007AFF',
+  },
+  providerButtonText: {
+    fontSize: 14,
+    color: '#333',
+    textAlign: 'center',
+  },
+  providerButtonTextActive: {
+    color: '#FFFFFF',
+  },
+  exampleContainer: {
+    marginBottom: 30,
+  },
+  autocompleteContainer: {
+    marginTop: 10,
+  },
+  selectedContainer: {
     backgroundColor: '#FFFFFF',
     padding: 16,
     borderRadius: 12,
@@ -199,20 +329,85 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 3,
+    marginBottom: 30,
   },
-  selectedTitle: {
+  locationText: {
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 8,
     color: '#000',
   },
-  selectedText: {
+  coordinatesText: {
     fontSize: 14,
-    marginBottom: 4,
     color: '#333',
   },
-  coordinates: {
+  usageContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+    marginBottom: 30,
+  },
+  exampleBlock: {
+    marginBottom: 20,
+  },
+  exampleTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: 8,
+    color: '#000',
+  },
+  codeBlock: {
+    backgroundColor: '#F8F8FA',
+    borderRadius: 8,
+    padding: 12,
+    overflow: 'hidden',
+  },
+  code: {
+    fontFamily: 'monospace',
     fontSize: 12,
-    color: '#666',
+    color: '#333',
+    lineHeight: 16,
+  },
+  apiKeyRequired: {
+    padding: 16,
+    borderRadius: 12,
+    backgroundColor: '#FFF3CD',
+    borderWidth: 1,
+    borderColor: '#FFEEBA',
+    marginTop: 10,
+  },
+  apiKeyText: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginBottom: 4,
+    color: '#856404',
+  },
+  apiKeySubtext: {
+    fontSize: 12,
+    marginBottom: 10,
+    color: '#856404',
+  },
+  codeExample: {
+    backgroundColor: '#F8F8FA',
+    borderRadius: 8,
+    padding: 12,
+    overflow: 'hidden',
+  },
+  codeText: {
+    fontFamily: 'monospace',
+    fontSize: 12,
+    color: '#333',
+    lineHeight: 16,
+  },
+  bottomPadding: {
+    height: 20,
   },
 });

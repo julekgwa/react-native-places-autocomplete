@@ -4,7 +4,7 @@ import type { LocationAutocompleteTheme } from '../types';
 export const createStyles = (theme: LocationAutocompleteTheme) =>
   StyleSheet.create({
     container: {
-      flex: 1,
+      // flex: 1,
     },
     searchInputContainer: {
       flexDirection: 'row',
@@ -31,6 +31,9 @@ export const createStyles = (theme: LocationAutocompleteTheme) =>
       fontSize: theme.typography.body.fontSize,
       color: theme.colors.onSurface,
       paddingVertical: theme.spacing.xs,
+      paddingHorizontal: 0,
+      minHeight: 30,
+      textAlignVertical: 'center',
     },
     clearButton: {
       padding: theme.spacing.iconPadding,
@@ -51,6 +54,10 @@ export const createStyles = (theme: LocationAutocompleteTheme) =>
       shadowRadius: 8,
       elevation: 3,
       maxHeight: 400,
+    },
+    suggestionsList: {
+      maxHeight: 300,
+      paddingBottom: theme.spacing.sm,
     },
     sectionTitle: {
       fontSize: theme.typography.titleMedium.fontSize,

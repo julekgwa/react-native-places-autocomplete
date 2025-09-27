@@ -5,18 +5,20 @@ import React, {
   useImperativeHandle,
   useCallback,
 } from 'react';
+
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
-  FlatList,
+  ScrollView,
   ActivityIndicator,
   Keyboard,
 } from 'react-native';
 
 import { Clock, MapPin, Search, X } from './icons';
 import { createStyles } from './styles/createStyles';
+import { createBuiltInFetchSuggestions } from './providers';
 import type { LocationSuggestion, LocationAutocompleteProps } from './types';
 import { mergeTheme } from './utils/themeUtils';
 
@@ -25,8 +27,12 @@ export const LocationAutocomplete: React.FC<LocationAutocompleteProps> = ({
   onLocationSelect,
   onQueryChange,
   fetchSuggestions,
+  provider,
+  providerConfig = {},
+  queryOptions = {},
   debounceMs = 300,
   containerStyle,
+  inputContainerStyle,
   inputStyle,
   suggestionStyle,
   textStyle,
@@ -58,38 +64,51 @@ export const LocationAutocomplete: React.FC<LocationAutocompleteProps> = ({
     [mergedTheme]
   );
 
-  const searchLocations = useCallback(
-    async (searchQuery: string) => {
-      if (!searchQuery.trim()) {
-        setSuggestions([]);
-        setIsLoading(false);
-        return;
-      }
+  const { apiKey, baseUrl } = providerConfig || {};
 
-      try {
-        setIsLoading(true);
-        setError('');
+  // Create the fetch function based on provider or custom fetchSuggestions
+  const getFetchFunction = React.useMemo(() => {
+    if (fetchSuggestions) {
+      return fetchSuggestions;
+    }
 
-        const results = await fetchSuggestions(searchQuery);
+    if (provider) {
+      return createBuiltInFetchSuggestions(
+        provider,
+        {
+          apiKey,
+          baseUrl,
+        },
+        queryOptions
+      );
+    }
 
-        setSuggestions(results);
-      } catch {
-        setError('Unable to fetch suggestions');
-        setSuggestions([]);
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [fetchSuggestions]
-  );
+    throw new Error('Either fetchSuggestions or provider must be provided');
+  }, [fetchSuggestions, provider, apiKey, baseUrl, queryOptions]);
 
   useEffect(() => {
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
     }
 
-    debounceRef.current = setTimeout(() => {
-      searchLocations(query);
+    debounceRef.current = setTimeout(async () => {
+      if (query.trim()) {
+        try {
+          setIsLoading(true);
+          setError('');
+
+          const results = await getFetchFunction(query);
+          setSuggestions(results);
+        } catch {
+          setError('Unable to fetch suggestions');
+          setSuggestions([]);
+        } finally {
+          setIsLoading(false);
+        }
+      } else {
+        setSuggestions([]);
+        setIsLoading(false);
+      }
     }, debounceMs);
 
     return () => {
@@ -97,7 +116,7 @@ export const LocationAutocomplete: React.FC<LocationAutocompleteProps> = ({
         clearTimeout(debounceRef.current);
       }
     };
-  }, [query, searchLocations, debounceMs]);
+  }, [query, debounceMs, getFetchFunction]);
 
   const handleInputChange = (text: string) => {
     if (text.length > 100) return;
@@ -160,61 +179,6 @@ export const LocationAutocomplete: React.FC<LocationAutocompleteProps> = ({
     [clearSearch, onQueryChange, query]
   );
 
-  const renderSuggestion = ({ item }: { item: LocationSuggestion }) => (
-    <TouchableOpacity
-      style={[dynamicStyles.suggestionItem, suggestionStyle]}
-      onPress={() => handleSuggestionPress(item)}
-      activeOpacity={0.7}
-    >
-      <View style={dynamicStyles.suggestionIcon}>
-        <MapPin
-          size={mergedTheme.icons.mapPin.size}
-          color={
-            mergedTheme.icons.mapPin.color ||
-            mergedTheme.colors.onSurfaceVariant
-          }
-        />
-      </View>
-      <View style={dynamicStyles.suggestionContent}>
-        <Text
-          style={[dynamicStyles.suggestionTitle, textStyle]}
-          numberOfLines={1}
-        >
-          {item.display_name.split(',')[0]}
-        </Text>
-        <Text
-          style={[dynamicStyles.suggestionSubtitle, textStyle]}
-          numberOfLines={1}
-        >
-          {item.display_name.split(',').slice(1).join(',').trim()}
-        </Text>
-      </View>
-    </TouchableOpacity>
-  );
-
-  const renderRecentSearch = ({ item }: { item: string }) => (
-    <TouchableOpacity
-      style={[dynamicStyles.suggestionItem, suggestionStyle]}
-      onPress={() => handleRecentPress(item)}
-      activeOpacity={0.7}
-    >
-      <View style={dynamicStyles.suggestionIcon}>
-        <Clock
-          size={mergedTheme.icons.clock.size}
-          color={
-            mergedTheme.icons.clock.color || mergedTheme.colors.onSurfaceVariant
-          }
-        />
-      </View>
-      <View style={dynamicStyles.suggestionContent}>
-        <Text style={[dynamicStyles.suggestionTitle, textStyle]}>{item}</Text>
-        <Text style={[dynamicStyles.suggestionSubtitle, textStyle]}>
-          Recent search
-        </Text>
-      </View>
-    </TouchableOpacity>
-  );
-
   const renderAttribution = () => {
     if (!attribution) return null;
 
@@ -234,7 +198,7 @@ export const LocationAutocomplete: React.FC<LocationAutocompleteProps> = ({
 
   return (
     <View style={[dynamicStyles.container, containerStyle]}>
-      <View style={[dynamicStyles.searchInputContainer, inputStyle]}>
+      <View style={[dynamicStyles.searchInputContainer, inputContainerStyle]}>
         <Search
           size={mergedTheme.icons.search.size}
           color={
@@ -245,7 +209,7 @@ export const LocationAutocomplete: React.FC<LocationAutocompleteProps> = ({
 
         <TextInput
           ref={inputRef}
-          style={[dynamicStyles.searchInput, textStyle]}
+          style={[dynamicStyles.searchInput, inputStyle]}
           placeholder={placeholder}
           placeholderTextColor={mergedTheme.colors.onSurfaceVariant}
           value={query}
@@ -254,6 +218,7 @@ export const LocationAutocomplete: React.FC<LocationAutocompleteProps> = ({
           autoCorrect={false}
           autoCapitalize="none"
         />
+
         {query.length > 0 && (
           <TouchableOpacity
             onPress={clearSearch}
@@ -286,13 +251,43 @@ export const LocationAutocomplete: React.FC<LocationAutocompleteProps> = ({
               <Text style={[dynamicStyles.sectionTitle, textStyle]}>
                 Recent Searches
               </Text>
-              <FlatList
-                data={internalRecentSearches}
-                renderItem={renderRecentSearch}
-                keyExtractor={(_item, index) => `recent-${index}`}
+              <ScrollView
+                style={dynamicStyles.suggestionsList}
                 showsVerticalScrollIndicator={false}
-                ListFooterComponent={renderAttribution}
-              />
+                nestedScrollEnabled={true}
+                keyboardShouldPersistTaps="handled"
+              >
+                {internalRecentSearches.map((item, index) => (
+                  <TouchableOpacity
+                    key={`recent-${index}`}
+                    style={[dynamicStyles.suggestionItem, suggestionStyle]}
+                    onPress={() => handleRecentPress(item)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={dynamicStyles.suggestionIcon}>
+                      <Clock
+                        size={mergedTheme.icons.clock.size}
+                        color={
+                          mergedTheme.icons.clock.color ||
+                          mergedTheme.colors.onSurfaceVariant
+                        }
+                      />
+                    </View>
+
+                    <View style={dynamicStyles.suggestionContent}>
+                      <Text style={[dynamicStyles.suggestionTitle, textStyle]}>
+                        {item}
+                      </Text>
+                      <Text
+                        style={[dynamicStyles.suggestionSubtitle, textStyle]}
+                      >
+                        Recent search
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+                {renderAttribution()}
+              </ScrollView>
             </View>
           ) : (
             <View>
@@ -303,14 +298,52 @@ export const LocationAutocomplete: React.FC<LocationAutocompleteProps> = ({
                   </Text>
                 </View>
               ) : null}
-              <FlatList
-                data={suggestions}
-                renderItem={renderSuggestion}
-                keyExtractor={(item) => item.place_id}
-                showsVerticalScrollIndicator={false}
-                keyboardShouldPersistTaps="handled"
-                ListFooterComponent={renderAttribution}
-              />
+              {suggestions.length > 0 && (
+                <ScrollView
+                  style={dynamicStyles.suggestionsList}
+                  showsVerticalScrollIndicator={false}
+                  nestedScrollEnabled={true}
+                  keyboardShouldPersistTaps="handled"
+                >
+                  {suggestions.map((item) => (
+                    <TouchableOpacity
+                      key={item.place_id}
+                      style={[dynamicStyles.suggestionItem, suggestionStyle]}
+                      onPress={() => handleSuggestionPress(item)}
+                      activeOpacity={0.7}
+                    >
+                      <View style={dynamicStyles.suggestionIcon}>
+                        <MapPin
+                          size={mergedTheme.icons.mapPin.size}
+                          color={
+                            mergedTheme.icons.mapPin.color ||
+                            mergedTheme.colors.onSurfaceVariant
+                          }
+                        />
+                      </View>
+                      <View style={dynamicStyles.suggestionContent}>
+                        <Text
+                          style={[dynamicStyles.suggestionTitle, textStyle]}
+                          numberOfLines={1}
+                        >
+                          {item.display_name.split(',')[0]}
+                        </Text>
+                        <Text
+                          style={[dynamicStyles.suggestionSubtitle, textStyle]}
+                          numberOfLines={1}
+                        >
+                          {item.display_name
+                            .split(',')
+                            .slice(1)
+                            .join(',')
+                            .trim()}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                  {renderAttribution()}
+                </ScrollView>
+              )}
             </View>
           )}
         </View>
@@ -328,6 +361,9 @@ export type {
   LocationAutocompleteRef,
   LocationAutocompleteTheme,
   DeepPartial,
+  LocationProvider,
+  ProviderConfig,
+  QueryOptions,
 } from './types';
 
 export { defaultTheme } from './theme/defaultTheme';
