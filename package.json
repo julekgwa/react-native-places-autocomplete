@@ -1,6 +1,6 @@
 {
   "name": "@julekgwa/react-native-places-autocomplete",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A provider-agnostic React Native autocomplete component for searching addresses and places. Supports Google Places, OpenStreetMap (Nominatim), LocationIQ, Mapbox, or any other custom API. Easy to integrate, fully customizable, and lightweight.",
   "main": "./lib/module/index.js",
   "types": "./lib/typescript/src/index.d.ts",
