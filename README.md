@@ -24,7 +24,7 @@ A provider-agnostic React Native autocomplete component for searching addresses 
 </p>
 
 <p align="center">
-  <a href="https://snack.expo.dev/@lekgwaraj/636f14">
+  <a href="https://snack.expo.dev/@lekgwaraj/react-native-places-autocomplete">
     <img src="https://img.shields.io/badge/Try%20it%20on-Expo%20Snack-4630EB.svg?style=for-the-badge&logo=expo&labelColor=FFF&logoColor=000" alt="Try it on Expo Snack"/>
   </a>
 </p>
@@ -34,7 +34,7 @@ A provider-agnostic React Native autocomplete component for searching addresses 
 - 🌍 **Built-in Providers** - OpenStreetMap (free), OpenCage, Google Places, Mapbox, LocationIQ, Geoapify, HERE, TomTom
 - 🔧 **Provider Agnostic** - Works with any geocoding API or use built-in providers
 - 🎨 **Fully Customizable** - Complete theme and styling control
-- 📱 **React Native Ready** - Built specifically for React Native apps, safe for ScrollViews
+- 📱 **React Native + Web Ready** - Built specifically for React Native apps
 - 🔍 **Recent Searches** - Built-in recent searches functionality
 - ⚡ **Debounced Requests** - Optimized API calls with configurable debouncing
 - 🎯 **TypeScript Support** - Full TypeScript support with type definitions
