@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch: {}
 
 jobs:
   deploy:
@@ -17,24 +18,32 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Enable Corepack & prepare Yarn
+        run: corepack enable && corepack prepare yarn@3.6.1 --activate
+
       - name: Cache Yarn
         uses: actions/cache@v4
         with:
           path: |
             ~/.cache/yarn
             .yarn/cache
-          key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock', 'website/yarn.lock') }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock') }}
           restore-keys: |
             ${{ runner.os }}-yarn-
 
-      - name: Install dependencies
-        run: yarn --cwd website install --frozen-lockfile
+      - name: Install dependencies (root)
+        run: yarn install --frozen-lockfile
 
-      - name: Build website
-        run: yarn --cwd website build
+      - name: Build website (workspace)
+        run: yarn workspace react-native-places-autocomplete-docs build
 
-      - name: Deploy to GitHub Pages
-        run: yarn --cwd website deploy
+      - name: Configure Git user
+        run: |
+          git config --global user.name "${{ github.actor }}"
+          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+
+      - name: Deploy to GitHub Pages (workspace)
+        run: yarn workspace react-native-places-autocomplete-docs deploy
         env:
-          GIT_USER: ${{ secrets.GITHUB_ACTOR }}
+          GIT_USER: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
