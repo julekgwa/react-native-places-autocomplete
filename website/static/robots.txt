@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://julekgwa.github.io/react-native-places-autocomplete/sitemap.xml
