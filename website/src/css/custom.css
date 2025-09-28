@@ -1,0 +1,14 @@
+/* Minimal custom styles for the docs site */
+:root {
+  --ifm-color-primary: #007aff;
+}
+
+.docMainContainer {
+  padding-top: 24px;
+}
+
+img.providers {
+  max-width: 100%;
+  height: auto;
+}
+

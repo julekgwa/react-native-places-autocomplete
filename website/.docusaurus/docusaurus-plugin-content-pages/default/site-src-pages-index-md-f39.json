@@ -1,0 +1,12 @@
+{
+  "type": "mdx",
+  "permalink": "/",
+  "source": "@site/src/pages/index.md",
+  "title": "React Native Places Autocomplete",
+  "description": "Supported Providers",
+  "frontMatter": {
+    "title": "React Native Places Autocomplete",
+    "slug": "/"
+  },
+  "unlisted": false
+}

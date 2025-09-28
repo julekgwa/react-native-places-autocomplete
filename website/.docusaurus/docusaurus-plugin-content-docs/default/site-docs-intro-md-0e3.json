@@ -1,0 +1,23 @@
+{
+  "id": "intro",
+  "title": "Introduction",
+  "description": "Supported Providers",
+  "source": "@site/docs/intro.md",
+  "sourceDirName": ".",
+  "slug": "/intro",
+  "permalink": "/docs/intro",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/julekgwa/react-native-places-autocomplete/docs/intro.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "id": "intro",
+    "title": "Introduction"
+  },
+  "sidebar": "docs",
+  "next": {
+    "title": "Usage",
+    "permalink": "/docs/usage"
+  }
+}

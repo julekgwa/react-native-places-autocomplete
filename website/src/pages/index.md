@@ -1,0 +1,35 @@
+---
+title: React Native Places Autocomplete
+slug: /
+---
+
+import Link from '@docusaurus/Link'
+
+![Supported Providers](/img/providers.png)
+
+# React Native Places Autocomplete
+
+A provider-agnostic location autocomplete component for React Native. Use built-in providers (OpenStreetMap, OpenCage, Mapbox, Google, Geoapify, LocationIQ, HERE, TomTom) or a custom provider via `fetchSuggestions`.
+
+- Lightweight and highly customizable
+- Built-in providers with `provider` + `providerConfig`
+- `queryOptions` to pass provider-specific query params
+- Infinite fetching / pagination support for providers that expose it
+
+## Quick links
+
+- <Link to="/docs/intro">Documentation</Link>
+- <Link to="/docs/usage">Usage</Link>
+- <a href="https://snack.expo.dev/@lekgwaraj/react-native-places-autocomplete" target="_blank" rel="noopener">Try on Expo Snack</a>
+- <a href="https://github.com/julekgwa/react-native-places-autocomplete" target="_blank" rel="noopener">View on GitHub</a>
+
+## Install
+
+```bash
+npm install @julekgwa/react-native-places-autocomplete
+```
+
+## Attribution
+
+Please include proper attribution for the provider you choose. For OpenStreetMap and OSM-based providers include a visible credit and a link to the ODbL: https://www.openstreetmap.org/copyright
+

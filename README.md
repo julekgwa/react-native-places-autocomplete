@@ -630,6 +630,30 @@ const MyComponent = () => {
 };
 ```
 
+## Documentation
+
+You can view the live docs site at: [https://julekgwa.github.io/react-native-places-autocomplete/](https://julekgwa.github.io/react-native-places-autocomplete/)
+
+Local documentation is available in the `website/` folder. A minimal Docusaurus site is included so you can run the docs locally while developing.
+
+To run the docs locally:
+
+```bash
+cd website
+npm install
+npm start
+```
+
+This will start the Docusaurus dev server at http://localhost:3000 by default.
+
+You can also build the static site with:
+
+```bash
+cd website
+npm run build
+npm run serve
+```
+
 ## 🤝 Contributing
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.

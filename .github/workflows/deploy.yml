@@ -1,0 +1,40 @@
+name: Deploy Docusaurus to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Cache Yarn
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/yarn
+            .yarn/cache
+          key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock', 'website/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
+      - name: Install dependencies
+        run: yarn --cwd website install --frozen-lockfile
+
+      - name: Build website
+        run: yarn --cwd website build
+
+      - name: Deploy to GitHub Pages
+        run: yarn --cwd website deploy
+        env:
+          GIT_USER: ${{ secrets.GITHUB_ACTOR }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,23 @@
+{
+  "id": "providers",
+  "title": "Built-in Providers",
+  "description": "This page documents the built-in providers supported by the library, sample queryOptions, and attribution notes.",
+  "source": "@site/docs/providers.md",
+  "sourceDirName": ".",
+  "slug": "/providers",
+  "permalink": "/docs/providers",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/julekgwa/react-native-places-autocomplete/docs/providers.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "id": "providers",
+    "title": "Built-in Providers"
+  },
+  "sidebar": "docs",
+  "previous": {
+    "title": "Usage",
+    "permalink": "/docs/usage"
+  }
+}

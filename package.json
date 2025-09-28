@@ -38,7 +38,8 @@
     "lint": "eslint \"**/*.{js,ts,tsx}\"",
     "clean": "del-cli lib",
     "prepare": "bob build",
-    "release": "release-it --only-version"
+    "release": "release-it --only-version",
+    "docs:dev": "yarn workspace react-native-places-autocomplete-docs start"
   },
   "keywords": [
     "react-native",
@@ -100,7 +101,8 @@
     "react-native-svg": "*"
   },
   "workspaces": [
-    "example"
+    "example",
+    "website"
   ],
   "packageManager": "yarn@3.6.1",
   "jest": {
