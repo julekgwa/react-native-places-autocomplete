@@ -3,6 +3,23 @@ import type {
   LocationProvider,
   ProviderConfig,
   QueryOptions,
+  ProviderResultMap,
+  OpenStreetMapResult,
+  GeoapifyFeature,
+  GooglePlacePrediction,
+  LocationIQSearchResult,
+  MapboxFeature,
+  TomTomResult,
+  HereAutocompleteItem,
+  OpenCageResult,
+  GeoapifyAutocompleteResponse,
+  MapboxGeocodingResponse,
+  GooglePlacesAutocompleteResponse,
+  HereAutocompleteResponse,
+  TomTomAutocompleteResponse,
+  OpenCageGeocodingResponse,
+  ProviderItemMap,
+  GooglePlaceSuggestion,
 } from '../types';
 
 const buildQueryString = (
@@ -16,19 +33,24 @@ const buildQueryString = (
     .join('&');
 };
 
-const normalizeOpenStreetMapResult = (item: any): LocationSuggestion => ({
+const normalizeOpenStreetMapResult = <T extends OpenStreetMapResult>(
+  item: T
+): LocationSuggestion<T> => ({
   place_id:
     item.place_id?.toString() ||
     item.osm_id?.toString() ||
     Math.random().toString(),
   display_name: item.display_name || item.name || 'Unknown location',
-  lat: item.lat || item.latitude || '0',
-  lon: item.lon || item.longitude || '0',
+  lat: item.lat || '0',
+  lon: item.lon || '0',
   type: item.type || item.class || 'unknown',
   importance: item.importance || 0.5,
+  raw: item,
 });
 
-const normalizeMapboxResult = (item: any): LocationSuggestion => ({
+const normalizeMapboxResult = <T extends MapboxFeature>(
+  item: T
+): LocationSuggestion<T> => ({
   place_id: item.id || Math.random().toString(),
   display_name: item.place_name || item.text || 'Unknown location',
   lat:
@@ -41,48 +63,64 @@ const normalizeMapboxResult = (item: any): LocationSuggestion => ({
     '0',
   type: item.place_type?.[0] || 'unknown',
   importance: item.relevance || 0.5,
+  raw: item,
 });
 
-const normalizeGoogleResult = (item: any): LocationSuggestion => ({
-  place_id: item.place_id || Math.random().toString(),
+const normalizeGoogleResult = <T extends GooglePlacePrediction>(
+  item: T
+): LocationSuggestion<T> => ({
+  place_id: item.placeId || Math.random().toString(),
   display_name:
-    item.description || item.formatted_address || 'Unknown location',
-  lat: item.geometry?.location?.lat?.toString() || '0',
-  lon: item.geometry?.location?.lng?.toString() || '0',
+    item.text?.text ||
+    item.structuredFormat?.mainText?.text ||
+    'Unknown location',
+  lat: '0',
+  lon: '0',
   type: item.types?.[0] || 'unknown',
   importance: 0.5,
+  raw: item,
 });
 
-const normalizeGeoapifyResult = (item: any): LocationSuggestion => ({
-  place_id:
-    item.place_id || item.osm_id?.toString() || Math.random().toString(),
-  display_name: item.formatted || item.address_line1 || 'Unknown location',
-  lat: item.lat?.toString() || '0',
-  lon: item.lon?.toString() || '0',
-  type: item.result_type || item.category || 'unknown',
-  importance: item.rank?.importance || 0.5,
+const normalizeGeoapifyResult = <T extends GeoapifyFeature>(
+  item: T
+): LocationSuggestion<T> => ({
+  place_id: item.properties.place_id || Math.random().toString(),
+  display_name: item.properties.formatted || 'Unknown location',
+  lat: String(item.properties.lat) || '0',
+  lon: String(item.properties.lon) || '0',
+  type: item.properties.result_type || 'unknown',
+  importance: item.properties.rank?.importance || 0.5,
+  raw: item,
 });
 
-const normalizeLocationIQResult = (item: any): LocationSuggestion => ({
+const normalizeLocationIQResult = <T extends LocationIQSearchResult>(
+  item: T
+): LocationSuggestion<T> => ({
   place_id:
     item.place_id || item.osm_id?.toString() || Math.random().toString(),
   display_name: item.display_name || 'Unknown location',
   lat: item.lat || '0',
   lon: item.lon || '0',
   type: item.type || item.class || 'unknown',
-  importance: item.importance || 0.5,
+  importance: 0.5,
+  raw: item,
 });
 
-const normalizeHereResult = (item: any): LocationSuggestion => ({
+const normalizeHereResult = <T extends HereAutocompleteItem>(
+  item: T
+): LocationSuggestion<T> => ({
   place_id: item.id || Math.random().toString(),
   display_name: item.title || item.address?.label || 'Unknown location',
-  lat: item.position?.lat?.toString() || '0',
-  lon: item.position?.lng?.toString() || '0',
-  type: item.resultType || item.localityType || 'unknown',
-  importance: item.scoring?.queryScore || 0.5,
+  lat: '0',
+  lon: '0',
+  type: item.resultType || 'unknown',
+  importance: 0.5,
+  raw: item,
 });
 
-const normalizeTomTomResult = (item: any): LocationSuggestion => ({
+const normalizeTomTomResult = <T extends TomTomResult>(
+  item: T
+): LocationSuggestion<T> => ({
   place_id: item.id || Math.random().toString(),
   display_name:
     item.poi?.name ||
@@ -93,19 +131,63 @@ const normalizeTomTomResult = (item: any): LocationSuggestion => ({
   lon: item.position?.lon?.toString() || '0',
   type: item.type || item.poi?.categories?.[0] || item.entityType || 'unknown',
   importance: item.score ? item.score / 3 : 0.5, // Normalize TomTom's score to 0-1 range
+  raw: item,
 });
 
-const normalizeOpenCageResult = (item: any): LocationSuggestion => ({
-  place_id: item.name || Math.random().toString(),
+const normalizeOpenCageResult = <T extends OpenCageResult>(
+  item: T
+): LocationSuggestion<T> => ({
+  place_id: Math.random().toString(),
   display_name: item.formatted || 'Unknown location',
   lat: item.geometry?.lat?.toString() || '0',
   lon: item.geometry?.lng?.toString() || '0',
   type: 'location',
   importance: 0.5,
+  raw: item,
 });
 
-export const createBuiltInFetchSuggestions = (
-  provider: LocationProvider,
+function mapProviderResult<P extends LocationProvider>(
+  provider: P,
+  item: ProviderItemMap[P]
+) {
+  switch (provider) {
+    case 'openstreetmap':
+      return normalizeOpenStreetMapResult(item as OpenStreetMapResult);
+
+    case 'mapbox':
+      return normalizeMapboxResult(item as MapboxFeature);
+
+    case 'google':
+      return normalizeGoogleResult(item as GooglePlacePrediction);
+
+    case 'geoapify':
+      return normalizeGeoapifyResult(item as GeoapifyFeature);
+
+    case 'locationiq':
+      return normalizeLocationIQResult(item as LocationIQSearchResult);
+
+    case 'here':
+      return normalizeHereResult(item as HereAutocompleteItem);
+
+    case 'tomtom':
+      return normalizeTomTomResult(item as TomTomResult);
+
+    case 'opencage':
+      return normalizeOpenCageResult(
+        item as OpenCageResult
+      ) as LocationSuggestion<
+        ProviderResultMap[P] extends Array<infer R> ? R : unknown
+      >;
+
+    default:
+      throw new Error(`Unsupported provider: ${provider}`);
+  }
+}
+
+export const createBuiltInFetchSuggestions = <
+  P extends keyof ProviderResultMap,
+>(
+  provider: P,
   config: ProviderConfig = {},
   queryOptions: QueryOptions = {}
 ) => {
@@ -273,57 +355,68 @@ export const createBuiltInFetchSuggestions = (
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const data = await response.json();
+      const data: ProviderResultMap[P] = await response.json();
 
-      // Handle different response structures
-      let results: any[];
+      const results = (() => {
+        switch (provider) {
+          case 'mapbox':
+            return (data as MapboxGeocodingResponse).features ?? [];
+          case 'google':
+            return (data as GooglePlacesAutocompleteResponse).predictions ?? [];
+          case 'geoapify':
+            return (data as GeoapifyAutocompleteResponse).features ?? [];
+          case 'here':
+            return (data as HereAutocompleteResponse).items ?? [];
+          case 'tomtom':
+            return (data as TomTomAutocompleteResponse).results ?? [];
+          case 'opencage':
+            return (data as OpenCageGeocodingResponse).results ?? [];
+          default:
+            return Array.isArray(data) ? data : [];
+        }
+      })() as unknown[];
 
-      if (provider === 'mapbox') {
-        results = data.features || [];
-      } else if (provider === 'google') {
-        results = data.predictions || [];
-      } else if (provider === 'geoapify') {
-        results = data.features || [];
-      } else if (provider === 'here') {
-        results = data.items || [];
-      } else if (provider === 'tomtom') {
-        results = data.results || [];
-      } else if (provider === 'opencage') {
-        results = data.results || [];
-      } else {
-        results = Array.isArray(data) ? data : [];
-      }
-
-      // Normalize results based on provider
+      // Normalize results based on the provider
       switch (provider) {
-        case 'openstreetmap':
-          return results.map(normalizeOpenStreetMapResult);
-
         case 'mapbox':
-          return results.map(normalizeMapboxResult);
+          return results.map((item) =>
+            mapProviderResult('mapbox', item as MapboxFeature)
+          );
 
         case 'google':
-          return results.map(normalizeGoogleResult);
+          return results.map((item) =>
+            mapProviderResult('google', item as GooglePlaceSuggestion)
+          );
 
         case 'geoapify':
-          return results.map((item: any) =>
-            normalizeGeoapifyResult(item.properties || item)
+          return results.map((item) =>
+            mapProviderResult('geoapify', item as GeoapifyFeature)
           );
 
         case 'locationiq':
-          return results.map(normalizeLocationIQResult);
+          return results.map((item) =>
+            mapProviderResult('locationiq', item as LocationIQSearchResult)
+          );
 
         case 'here':
-          return results.map(normalizeHereResult);
+          return results.map((item) =>
+            mapProviderResult('here', item as HereAutocompleteItem)
+          );
 
         case 'tomtom':
-          return results.map(normalizeTomTomResult);
+          return results.map((item) =>
+            mapProviderResult('tomtom', item as TomTomResult)
+          );
 
         case 'opencage':
-          return results.map(normalizeOpenCageResult);
+          return results.map((item) =>
+            mapProviderResult('opencage', item as OpenCageResult)
+          );
 
         default:
-          return results.map(normalizeOpenStreetMapResult);
+          return results.map((item) =>
+            mapProviderResult('openstreetmap', item as OpenStreetMapResult)
+          );
       }
     } catch (error) {
       console.error(`Error fetching suggestions from ${provider}:`, error);

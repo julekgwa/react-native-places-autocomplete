@@ -19,7 +19,12 @@ import {
 import { Clock, MapPin, Search, X } from './icons';
 import { createStyles } from './styles/createStyles';
 import { createBuiltInFetchSuggestions } from './providers';
-import type { LocationSuggestion, LocationAutocompleteProps } from './types';
+import type {
+  LocationSuggestion,
+  LocationAutocompleteProps,
+  ProviderItemMap,
+  LocationProvider,
+} from './types';
 import { mergeTheme } from './utils/themeUtils';
 
 export const LocationAutocomplete: React.FC<LocationAutocompleteProps> = ({
@@ -55,7 +60,7 @@ export const LocationAutocomplete: React.FC<LocationAutocompleteProps> = ({
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<TextInput>(null);
 
-  // Merge provided theme with default theme
+  // Merge provided theme with the default theme
   const mergedTheme = React.useMemo(() => mergeTheme(theme), [theme]);
 
   // Create dynamic styles based on theme
@@ -141,7 +146,9 @@ export const LocationAutocomplete: React.FC<LocationAutocompleteProps> = ({
       onRecentSearchesChange?.(updatedRecent);
     }
 
-    onLocationSelect?.(suggestion);
+    onLocationSelect?.(
+      suggestion as LocationSuggestion<ProviderItemMap[LocationProvider]>
+    );
     onQueryChange?.(locationName);
     Keyboard.dismiss();
   };
