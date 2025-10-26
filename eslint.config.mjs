@@ -1,5 +1,6 @@
 import { fixupConfigRules } from '@eslint/compat';
 import { FlatCompat } from '@eslint/eslintrc';
+import reactHooks from 'eslint-plugin-react-hooks';
 import js from '@eslint/js';
 import prettier from 'eslint-plugin-prettier';
 import { defineConfig } from 'eslint/config';
@@ -12,6 +13,7 @@ const compat = new FlatCompat({
   baseDirectory: __dirname,
   recommendedConfig: js.configs.recommended,
   allConfig: js.configs.all,
+  ['react-hooks']: reactHooks.configs['recommended'],
 });
 
 export default defineConfig([

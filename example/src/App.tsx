@@ -19,7 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 // Mock function for demonstration (when not using built-in providers)
 const mockFetchSuggestions = async (
   query: string
-): Promise<LocationSuggestion[]> => {
+): Promise<LocationSuggestion<unknown>[]> => {
   // Simulate network delay
   await new Promise((resolve) => setTimeout(resolve, 500));
 
@@ -91,6 +91,7 @@ export default function App() {
       return (
         <LocationAutocomplete
           {...commonProps}
+          // @ts-ignore
           fetchSuggestions={mockFetchSuggestions}
         />
       );

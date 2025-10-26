@@ -675,14 +675,25 @@ export type ProviderItemMap = {
   tomtom: TomTomResult;
 };
 
-export interface LocationAutocompleteProps {
+export interface LocationAutocompleteProps<
+  T extends LocationProvider = LocationProvider,
+> {
   placeholder?: string;
   onLocationSelect?: (
-    location: LocationSuggestion<ProviderItemMap[LocationProvider]>
+    location: LocationSuggestion<
+      T extends keyof ProviderItemMap ? ProviderItemMap[T] : unknown
+    >
   ) => void;
   onQueryChange?: (query: string) => void;
-  fetchSuggestions?: (query: string) => Promise<LocationSuggestion[]>; // only for custom providers
-  provider?: LocationProvider;
+  onError?: (error: Error) => void;
+  fetchSuggestions?: (
+    query: string
+  ) => Promise<
+    LocationSuggestion<
+      T extends keyof ProviderItemMap ? ProviderItemMap[T] : unknown
+    >[]
+  >;
+  provider?: T;
   providerConfig?: ProviderConfig;
   queryOptions?: QueryOptions;
   debounceMs?: number;

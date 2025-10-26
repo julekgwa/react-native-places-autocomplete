@@ -27,12 +27,15 @@ import type {
 } from './types';
 import { mergeTheme } from './utils/themeUtils';
 
-export const LocationAutocomplete: React.FC<LocationAutocompleteProps> = ({
+export const LocationAutocomplete = <
+  T extends LocationProvider = LocationProvider,
+>({
   placeholder = 'Search for a location...',
   onLocationSelect,
   onQueryChange,
+  onError,
   fetchSuggestions,
-  provider,
+  provider = 'openstreetmap' as T,
   providerConfig = {},
   queryOptions = {},
   debounceMs = 300,
@@ -48,9 +51,13 @@ export const LocationAutocomplete: React.FC<LocationAutocompleteProps> = ({
   attribution,
   theme = {},
   ref,
-}) => {
+}: LocationAutocompleteProps<T>) => {
   const [query, setQuery] = useState<string>('');
-  const [suggestions, setSuggestions] = useState<LocationSuggestion[]>([]);
+  const [suggestions, setSuggestions] = useState<
+    LocationSuggestion<
+      T extends keyof ProviderItemMap ? ProviderItemMap[T] : unknown
+    >[]
+  >([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
   const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
@@ -63,7 +70,7 @@ export const LocationAutocomplete: React.FC<LocationAutocompleteProps> = ({
   // Merge provided theme with the default theme
   const mergedTheme = React.useMemo(() => mergeTheme(theme), [theme]);
 
-  // Create dynamic styles based on theme
+  // Create dynamic styles based on a theme
   const dynamicStyles = React.useMemo(
     () => createStyles(mergedTheme),
     [mergedTheme]
@@ -103,10 +110,19 @@ export const LocationAutocomplete: React.FC<LocationAutocompleteProps> = ({
           setError('');
 
           const results = await getFetchFunction(query);
-          setSuggestions(results);
-        } catch {
-          setError('Unable to fetch suggestions');
+          setSuggestions(
+            results as LocationSuggestion<
+              T extends keyof ProviderItemMap ? ProviderItemMap[T] : unknown
+            >[]
+          );
+        } catch (err) {
+          const fetchError =
+            err instanceof Error
+              ? err
+              : new Error('Unable to fetch suggestions');
+          setError(fetchError.message);
           setSuggestions([]);
+          onError?.(fetchError);
         } finally {
           setIsLoading(false);
         }
@@ -121,7 +137,7 @@ export const LocationAutocomplete: React.FC<LocationAutocompleteProps> = ({
         clearTimeout(debounceRef.current);
       }
     };
-  }, [query, debounceMs, getFetchFunction]);
+  }, [query, debounceMs, getFetchFunction, onError]);
 
   const handleInputChange = (text: string) => {
     if (text.length > 100) return;
@@ -130,7 +146,11 @@ export const LocationAutocomplete: React.FC<LocationAutocompleteProps> = ({
     onQueryChange?.(text);
   };
 
-  const handleSuggestionPress = (suggestion: LocationSuggestion) => {
+  const handleSuggestionPress = (
+    suggestion: LocationSuggestion<
+      T extends keyof ProviderItemMap ? ProviderItemMap[T] : unknown
+    >
+  ) => {
     const locationName = suggestion.display_name.split(',')[0] || '';
     setQuery(locationName);
     setShowSuggestions(false);
@@ -146,9 +166,7 @@ export const LocationAutocomplete: React.FC<LocationAutocompleteProps> = ({
       onRecentSearchesChange?.(updatedRecent);
     }
 
-    onLocationSelect?.(
-      suggestion as LocationSuggestion<ProviderItemMap[LocationProvider]>
-    );
+    onLocationSelect?.(suggestion);
     onQueryChange?.(locationName);
     Keyboard.dismiss();
   };
