@@ -131,27 +131,27 @@ const App = () => {
 
 ### Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `fetchSuggestions` | `(query: string) => Promise<LocationSuggestion[]>` | `undefined` | Function to fetch location suggestions (optional when using `provider`) |
-| `provider` | `LocationProvider` | `openstreetmap` | Built-in provider: `'openstreetmap'`, `'mapbox'`, `'google'`, `'geoapify'`, `'locationiq'` |
-| `providerConfig` | `ProviderConfig` | `{}` | Configuration for built-in providers (API keys, base URLs) |
-| `queryOptions` | `QueryOptions` | `{}` | Provider-specific query parameters |
-| `onLocationSelect` | `(location: LocationSuggestion) => void` | `undefined` | Callback when a location is selected |
-| `onQueryChange` | `(query: string) => void` | `undefined` | Callback when search query changes |
+| Prop | Type | Default                      | Description |
+|------|------|------------------------------|-------------|
+| `fetchSuggestions` | `(query: string) => Promise<LocationSuggestion[]>` | `undefined`                  | Function to fetch location suggestions (optional when using `provider`) |
+| `provider` | `LocationProvider` | `openstreetmap`              | Built-in provider: `'openstreetmap'`, `'mapbox'`, `'google'`, `'geoapify'`, `'locationiq'` |
+| `providerConfig` | `ProviderConfig` | `{}`                         | Configuration for built-in providers (API keys, base URLs) |
+| `queryOptions` | `QueryOptions` | `{limit: 10}`                | Provider-specific query parameters |
+| `onLocationSelect` | `(location: LocationSuggestion) => void` | `undefined`                  | Callback when a location is selected |
+| `onQueryChange` | `(query: string) => void` | `undefined`                  | Callback when search query changes |
 | `placeholder` | `string` | `"Search for a location..."` | Input placeholder text |
-| `debounceMs` | `number` | `300` | Debounce delay for API calls in milliseconds |
-| `showRecentSearches` | `boolean` | `true` | Show recent searches when input is empty |
-| `recentSearches` | `string[]` | `[]` | Array of recent search terms |
-| `onRecentSearchesChange` | `(searches: string[]) => void` | `undefined` | Callback when recent searches update |
-| `maxRecentSearches` | `number` | `5` | Maximum number of recent searches to keep |
-| `containerStyle` | `ViewStyle` | `undefined` | Style for the main wrapper container |
-| `inputContainerStyle` | `ViewStyle` | `undefined` | Style for the input container (with search icon, input, clear button) |
-| `inputStyle` | `TextStyle` | `undefined` | Style for the TextInput field itself |
-| `suggestionStyle` | `ViewStyle` | `undefined` | Style for individual suggestion items |
-| `textStyle` | `TextStyle` | `undefined` | Style for text elements (titles, labels) |
-| `theme` | `DeepPartial<LocationAutocompleteTheme>` | `{}` | Custom theme configuration |
-| `attribution` | `React.ComponentType \| React.ReactElement` | `null` | Attribution component for your provider |
+| `debounceMs` | `number` | `300`                        | Debounce delay for API calls in milliseconds |
+| `showRecentSearches` | `boolean` | `true`                       | Show recent searches when input is empty |
+| `recentSearches` | `string[]` | `[]`                         | Array of recent search terms |
+| `onRecentSearchesChange` | `(searches: string[]) => void` | `undefined`                  | Callback when recent searches update |
+| `maxRecentSearches` | `number` | `5`                          | Maximum number of recent searches to keep |
+| `containerStyle` | `ViewStyle` | `undefined`                  | Style for the main wrapper container |
+| `inputContainerStyle` | `ViewStyle` | `undefined`                  | Style for the input container (with search icon, input, clear button) |
+| `inputStyle` | `TextStyle` | `undefined`                  | Style for the TextInput field itself |
+| `suggestionStyle` | `ViewStyle` | `undefined`                  | Style for individual suggestion items |
+| `textStyle` | `TextStyle` | `undefined`                  | Style for text elements (titles, labels) |
+| `theme` | `DeepPartial<LocationAutocompleteTheme>` | `{}`                         | Custom theme configuration |
+| `attribution` | `React.ComponentType \| React.ReactElement` | `null`                       | Attribution component for your provider |
 
 ## Documentation
 

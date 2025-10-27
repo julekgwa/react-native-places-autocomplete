@@ -37,7 +37,9 @@ export const LocationAutocomplete = <
   fetchSuggestions,
   provider = 'openstreetmap' as T,
   providerConfig = {},
-  queryOptions = {},
+  queryOptions = {
+    limit: 10,
+  },
   debounceMs = 300,
   containerStyle,
   inputContainerStyle,
