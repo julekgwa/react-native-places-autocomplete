@@ -19,12 +19,18 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 // Mock function for demonstration (when not using built-in providers)
 const mockFetchSuggestions = async (
   query: string
-): Promise<LocationSuggestion<unknown>[]> => {
+): Promise<
+  LocationSuggestion<{
+    title: string;
+  }>[]
+> => {
   // Simulate network delay
   await new Promise((resolve) => setTimeout(resolve, 500));
 
   // Mock data based on query
-  const mockLocations: LocationSuggestion[] = [
+  const mockLocations: LocationSuggestion<{
+    title: string;
+  }>[] = [
     {
       place_id: '1',
       display_name: 'New York, NY, United States',
@@ -32,6 +38,9 @@ const mockFetchSuggestions = async (
       lon: '-74.0060',
       type: 'city',
       importance: 0.9,
+      raw: {
+        title: 'New York',
+      },
     },
     {
       place_id: '2',
@@ -40,6 +49,9 @@ const mockFetchSuggestions = async (
       lon: '-0.1278',
       type: 'city',
       importance: 0.8,
+      raw: {
+        title: 'London',
+      },
     },
   ];
 
@@ -89,9 +101,13 @@ export default function App() {
 
     if (currentProvider === 'custom') {
       return (
-        <LocationAutocomplete
+        <LocationAutocomplete<{
+          title: string;
+        }>
           {...commonProps}
-          // @ts-ignore
+          onLocationSelect={(location) => {
+            console.log(location.raw);
+          }}
           fetchSuggestions={mockFetchSuggestions}
         />
       );
@@ -101,7 +117,9 @@ export default function App() {
       return (
         <LocationAutocomplete
           {...commonProps}
-          provider="openstreetmap"
+          onLocationSelect={(location) => {
+            handleLocationSelect(location);
+          }}
           queryOptions={{
             countrycodes: 'us,ca,gb',
             limit: 8,

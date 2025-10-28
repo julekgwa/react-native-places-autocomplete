@@ -676,36 +676,41 @@ export type ProviderItemMap = {
 };
 
 export interface LocationAutocompleteProps<
-  T extends LocationProvider = LocationProvider,
+  T extends keyof ProviderItemMap | object = keyof ProviderItemMap,
 > {
   placeholder?: string;
   onLocationSelect?: (
     location: LocationSuggestion<
-      T extends keyof ProviderItemMap ? ProviderItemMap[T] : unknown
+      T extends keyof ProviderItemMap ? ProviderItemMap[T] : T
     >
   ) => void;
   onQueryChange?: (query: string) => void;
   onError?: (error: Error) => void;
+
   fetchSuggestions?: (
     query: string
   ) => Promise<
     LocationSuggestion<
-      T extends keyof ProviderItemMap ? ProviderItemMap[T] : unknown
+      T extends keyof ProviderItemMap ? ProviderItemMap[T] : T
     >[]
   >;
+
   provider?: T;
   providerConfig?: ProviderConfig;
   queryOptions?: QueryOptions;
   debounceMs?: number;
+
   containerStyle?: ViewStyle;
   inputContainerStyle?: ViewStyle;
   inputStyle?: ViewStyle;
   suggestionStyle?: ViewStyle;
   textStyle?: TextStyle;
+
   showRecentSearches?: boolean;
   recentSearches?: string[];
   onRecentSearchesChange?: (searches: string[]) => void;
   maxRecentSearches?: number;
+
   attribution?: React.ComponentType | React.ReactElement | null;
   theme?: DeepPartial<LocationAutocompleteTheme>;
   ref?: React.RefObject<LocationAutocompleteRef>;

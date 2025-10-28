@@ -1,6 +1,5 @@
 import type {
   LocationSuggestion,
-  LocationProvider,
   ProviderConfig,
   QueryOptions,
   ProviderResultMap,
@@ -19,7 +18,6 @@ import type {
   TomTomAutocompleteResponse,
   OpenCageGeocodingResponse,
   ProviderItemMap,
-  GooglePlaceSuggestion,
 } from '../types';
 
 const buildQueryString = (
@@ -146,42 +144,27 @@ const normalizeOpenCageResult = <T extends OpenCageResult>(
   raw: item,
 });
 
-function mapProviderResult<P extends LocationProvider>(
+const normalizers: {
+  [P in keyof ProviderItemMap]: (
+    item: ProviderItemMap[P]
+  ) => LocationSuggestion<ProviderItemMap[P]>;
+} = {
+  openstreetmap: (item) => normalizeOpenStreetMapResult(item),
+  here: (item) => normalizeHereResult(item),
+  geoapify: (item) => normalizeGeoapifyResult(item),
+  locationiq: (item) => normalizeLocationIQResult(item),
+  mapbox: (item) => normalizeMapboxResult(item),
+  opencage: (item) => normalizeOpenCageResult(item),
+  google: (item) => normalizeGoogleResult(item),
+  tomtom: (item) => normalizeTomTomResult(item),
+};
+
+function mapProviderResult<P extends keyof ProviderItemMap>(
   provider: P,
   item: ProviderItemMap[P]
-) {
-  switch (provider) {
-    case 'openstreetmap':
-      return normalizeOpenStreetMapResult(item as OpenStreetMapResult);
-
-    case 'mapbox':
-      return normalizeMapboxResult(item as MapboxFeature);
-
-    case 'google':
-      return normalizeGoogleResult(item as GooglePlacePrediction);
-
-    case 'geoapify':
-      return normalizeGeoapifyResult(item as GeoapifyFeature);
-
-    case 'locationiq':
-      return normalizeLocationIQResult(item as LocationIQSearchResult);
-
-    case 'here':
-      return normalizeHereResult(item as HereAutocompleteItem);
-
-    case 'tomtom':
-      return normalizeTomTomResult(item as TomTomResult);
-
-    case 'opencage':
-      return normalizeOpenCageResult(
-        item as OpenCageResult
-      ) as LocationSuggestion<
-        ProviderResultMap[P] extends Array<infer R> ? R : unknown
-      >;
-
-    default:
-      throw new Error(`Unsupported provider: ${provider}`);
-  }
+): LocationSuggestion<ProviderItemMap[P]> {
+  const normalize = normalizers[provider];
+  return normalize(item);
 }
 
 export const createBuiltInFetchSuggestions = <
@@ -189,9 +172,11 @@ export const createBuiltInFetchSuggestions = <
 >(
   provider: P,
   config: ProviderConfig = {},
-  queryOptions: QueryOptions = {}
-) => {
-  return async (query: string): Promise<LocationSuggestion[]> => {
+  queryOptions?: QueryOptions | undefined
+): ((query: string) => Promise<LocationSuggestion<ProviderItemMap[P]>[]>) => {
+  return async (
+    query: string
+  ): Promise<LocationSuggestion<ProviderItemMap[P]>[]> => {
     if (!query.trim()) {
       return [];
     }
@@ -212,7 +197,7 @@ export const createBuiltInFetchSuggestions = <
       case 'openstreetmap': {
         const params = buildQueryString({
           ...baseParams,
-          format: queryOptions.format || 'jsonv2',
+          format: queryOptions?.format || 'jsonv2',
           addressdetails: 1,
         });
         url = `${
@@ -362,7 +347,7 @@ export const createBuiltInFetchSuggestions = <
           case 'mapbox':
             return (data as MapboxGeocodingResponse).features ?? [];
           case 'google':
-            return (data as GooglePlacesAutocompleteResponse).predictions ?? [];
+            return (data as GooglePlacesAutocompleteResponse).suggestions ?? [];
           case 'geoapify':
             return (data as GeoapifyAutocompleteResponse).features ?? [];
           case 'here':
@@ -376,48 +361,9 @@ export const createBuiltInFetchSuggestions = <
         }
       })() as unknown[];
 
-      // Normalize results based on the provider
-      switch (provider) {
-        case 'mapbox':
-          return results.map((item) =>
-            mapProviderResult('mapbox', item as MapboxFeature)
-          );
-
-        case 'google':
-          return results.map((item) =>
-            mapProviderResult('google', item as GooglePlaceSuggestion)
-          );
-
-        case 'geoapify':
-          return results.map((item) =>
-            mapProviderResult('geoapify', item as GeoapifyFeature)
-          );
-
-        case 'locationiq':
-          return results.map((item) =>
-            mapProviderResult('locationiq', item as LocationIQSearchResult)
-          );
-
-        case 'here':
-          return results.map((item) =>
-            mapProviderResult('here', item as HereAutocompleteItem)
-          );
-
-        case 'tomtom':
-          return results.map((item) =>
-            mapProviderResult('tomtom', item as TomTomResult)
-          );
-
-        case 'opencage':
-          return results.map((item) =>
-            mapProviderResult('opencage', item as OpenCageResult)
-          );
-
-        default:
-          return results.map((item) =>
-            mapProviderResult('openstreetmap', item as OpenStreetMapResult)
-          );
-      }
+      return (results ?? []).map((item) =>
+        mapProviderResult(provider, item as ProviderItemMap[P])
+      );
     } catch (error) {
       console.error(`Error fetching suggestions from ${provider}:`, error);
       throw error;

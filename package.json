@@ -32,7 +32,7 @@
     "!**/.*"
   ],
   "scripts": {
-    "example": "yarn workspace @julekgwa/react-native-places-autocomplete-example",
+    "example": "yarn workspace @julekgwa/react-native-places-autocomplete-example run start",
     "test": "jest",
     "typecheck": "tsc",
     "lint": "eslint \"**/*.{js,ts,tsx}\"",

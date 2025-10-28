@@ -23,19 +23,24 @@ import type {
   LocationSuggestion,
   LocationAutocompleteProps,
   ProviderItemMap,
-  LocationProvider,
 } from './types';
 import { mergeTheme } from './utils/themeUtils';
 
+type FetchSuggestionsType<T extends keyof ProviderItemMap | object> = (
+  query: string
+) => Promise<
+  LocationSuggestion<T extends keyof ProviderItemMap ? ProviderItemMap[T] : T>[]
+>;
+
 export const LocationAutocomplete = <
-  T extends LocationProvider = LocationProvider,
+  T extends keyof ProviderItemMap | object = 'openstreetmap',
 >({
   placeholder = 'Search for a location...',
   onLocationSelect,
   onQueryChange,
   onError,
   fetchSuggestions,
-  provider = 'openstreetmap' as T,
+  provider,
   providerConfig = {},
   queryOptions = {
     limit: 10,
@@ -57,7 +62,7 @@ export const LocationAutocomplete = <
   const [query, setQuery] = useState<string>('');
   const [suggestions, setSuggestions] = useState<
     LocationSuggestion<
-      T extends keyof ProviderItemMap ? ProviderItemMap[T] : unknown
+      T extends keyof ProviderItemMap ? ProviderItemMap[T] : T
     >[]
   >([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -80,24 +85,16 @@ export const LocationAutocomplete = <
 
   const { apiKey, baseUrl } = providerConfig || {};
 
-  // Create the fetch function based on provider or custom fetchSuggestions
-  const getFetchFunction = React.useMemo(() => {
+  const getFetchFunction = React.useMemo<FetchSuggestionsType<T>>(() => {
     if (fetchSuggestions) {
       return fetchSuggestions;
     }
 
-    if (provider) {
-      return createBuiltInFetchSuggestions(
-        provider,
-        {
-          apiKey,
-          baseUrl,
-        },
-        queryOptions
-      );
-    }
-
-    throw new Error('Either fetchSuggestions or provider must be provided');
+    return createBuiltInFetchSuggestions(
+      (provider ?? 'openstreetmap') as keyof ProviderItemMap,
+      { apiKey, baseUrl },
+      queryOptions
+    ) as FetchSuggestionsType<T>;
   }, [fetchSuggestions, provider, apiKey, baseUrl, queryOptions]);
 
   useEffect(() => {
@@ -112,11 +109,7 @@ export const LocationAutocomplete = <
           setError('');
 
           const results = await getFetchFunction(query);
-          setSuggestions(
-            results as LocationSuggestion<
-              T extends keyof ProviderItemMap ? ProviderItemMap[T] : unknown
-            >[]
-          );
+          setSuggestions(results);
         } catch (err) {
           const fetchError =
             err instanceof Error
@@ -150,7 +143,7 @@ export const LocationAutocomplete = <
 
   const handleSuggestionPress = (
     suggestion: LocationSuggestion<
-      T extends keyof ProviderItemMap ? ProviderItemMap[T] : unknown
+      T extends keyof ProviderItemMap ? ProviderItemMap[T] : T
     >
   ) => {
     const locationName = suggestion.display_name.split(',')[0] || '';
