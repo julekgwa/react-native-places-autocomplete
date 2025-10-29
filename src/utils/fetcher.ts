@@ -183,9 +183,13 @@ export async function fetcher<P extends keyof ProviderQueryOptionsMap>(
         typeahead: true,
         limit: options.limit,
       });
+
+      const ext = options.ext || 'json';
+      const version = options.versionNumber || 2;
+
       const url = `${
-        config.baseUrl || 'https://api.tomtom.com/search/2/search'
-      }/${encodeURIComponent(query)}.json?${params}`;
+        config.baseUrl || `https://api.tomtom.com/search/${version}/search`
+      }/${encodeURIComponent(query)}.${ext}?${params}`;
       return Api.request<ProviderResultMap['tomtom']>(url, {
         headers,
       }).then(({ response, status }) => ({ data: response.results, status }));
