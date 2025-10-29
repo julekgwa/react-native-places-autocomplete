@@ -42,9 +42,7 @@ export const LocationAutocomplete = <
   fetchSuggestions,
   provider,
   providerConfig = {},
-  queryOptions = {
-    limit: 10,
-  },
+  queryOptions,
   debounceMs = 300,
   containerStyle,
   inputContainerStyle,
@@ -112,9 +110,7 @@ export const LocationAutocomplete = <
           setSuggestions(results);
         } catch (err) {
           const fetchError =
-            err instanceof Error
-              ? err
-              : new Error('Unable to fetch suggestions');
+            err instanceof Error ? err : new Error('Unable to api suggestions');
           setError(fetchError.message);
           setSuggestions([]);
           onError?.(fetchError);
